@@ -8,10 +8,16 @@ import json
 # import pywhatkit as py
 #Librería para Envío de Correos Electrónicos
 import smtplib
+#
+from datetime import datetime
+from dateutil import tz
+
 from email.message import EmailMessage
 
-
 from aiohttp import ClientSession
+
+from_zone = tz.tzutc()
+to_zone = tz.tzlocal()
 
 context = []
 
@@ -35,11 +41,9 @@ async def main():
                     if x['name'].find('Valija') == -1:
                         continue
                     else:
-                        #list_vh.append(vehicle)
                         task = await get_location_for_vehicle(session, base_url + url_for_location_v + vehicle['id'], api_key) #obtener la ubicación de los tractos
                         vehicles_location[vehicle['id']] = task['data'] #agregar las ubicaciones de los tractos que tienen asignada la valija a un nuevo diccionario
                         vehicles_new[vehicle['id']] = vehicle #agregar vehículos que si tienen asignada la valija al nuevo diccionario
-    #[print(v) for x,v in vehicles_location.items()]
     
     for key, value in vehicles_location.items():
         for v in value:
@@ -49,14 +53,13 @@ async def main():
                         for kV, vV in vehicles_new.items():
                             if vV['id'] == v['id']:
                                 for vv in vV['tags']:
-                                    print('{0} - {1}'.format(vV['id'], v['id']))
                                     url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])+'/@'+str(x['latitude'])+','+str(x['longitude'])+',14z/data=!4m2!4m1!3e0'
                                     location_data = v['id'], v['name'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
-                                    print('ID: {0} - Tractor: {1} - Ubicación: {2} - Tiempo y Hora UTC: {3} - Latitude: {4} - Longitud: {5} - Valija: {6}'.format(v['id'], v['name'], x['reverseGeo']['formattedLocation'],
-                                    x['time'], x['latitude'], x['longitude'], vv['name']))
-                                    print('Url Google Maps: {0}'.format(url_gmap))
+                                    #print('ID: {0} - Tractor: {1} - Ubicación: {2} - Tiempo y Hora UTC: {3} - Latitude: {4} - Longitud: {5} - Valija: {6}'.format(v['id'], v['name'], x['reverseGeo']['formattedLocation'],
+                                    #x['time'], x['latitude'], x['longitude'], vv['name']))
+                                    #print('Url Google Maps: {0}'.format(url_gmap))
                                     context.append(location_data)
-                                    print()
+                                    #print()
                         
                         #Enviar Whatsapp
                         #py.sendwhatmsg(f'+526141627692','Tractor: {0} - Ubicación: {1} - Tiempo y Hora UTC: {2} - GoogleMaps: {3}'.format(v['name'], x['reverseGeo']['formattedLocation'],
@@ -106,8 +109,17 @@ def get_config_email():
     config = get_config_file()
     return config
 
+def convert_time_zone(utc_time):
+    utcTime = datetime.strptime(utc_time, '%Y-%m-%dT%H:%M:%S%z')
+    utcTime = utcTime.replace(tzinfo=from_zone)
+    local_time = utcTime.astimezone(to_zone)
+    return local_time.strftime('%d-%m-%Y %H:%M:%S')
+
 def send_email(context):
     config = get_config_email()
+    local_time = convert_time_zone(context[3])
+
+    print(f'Id: {context[0]} - Tractor: {context[1]} -> {context[6]}\nLatitude: {context[4]} - Longitude: {context[5]}\nUbicación: {context[2]}\n{context[7]}')
     
     sender_email_address = config['email_config']['sender_email_address']
     sender_email_pwd = config['email_config']['sender_email_pwd']
@@ -121,21 +133,18 @@ def send_email(context):
         message = EmailMessage()
 
         message_html = f'''
-    <!DOCTYPE html> 
-    <head> 
-    </head>    
-        <body>        
-            <h1>Estado de la {context[6]}</h1>        
-            <p>Tractor: {context[1]}</p>
-            <p>Ubicación Actual: {context[2]}</p>
-            <p>Tiempo y Hora UTC: {context[3]}</p>  
-            <a href="{context[7]}">Ver en Google Maps</a>    
-        </body> 
-    </html>
+<!DOCTYPE html> 
+<head> 
+</head>    
+    <body>        
+        <h1>Estado de la {context[6]}</h1>        
+        <p>Tractor: {context[1]}</p>
+        <p>Ubicación Actual: {context[2]}</p>
+        <p>Tiempo y Hora: {local_time}</p>  
+        <a href="{context[7]}">Ver en Google Maps</a>    
+    </body> 
+</html>
         '''
-
-        #with open('message.html', 'r') as file:
-        #    file_content = file.read()
 
         message['Subject'] = email_subject
         message['From'] = sender_email_address
@@ -145,19 +154,16 @@ def send_email(context):
 
         server = smtplib.SMTP_SSL(email_smtp+':'+email_port)
 
-        #server.ehlo()
-
-        #server.starttls()
-
         server.login(sender_email_address, sender_email_pwd)
 
         server.send_message(message)
 
-        print('Email Enviado - Tractor: '+context[1])
+        print('Email Enviado')
     except Exception as err:
         print('Error al enviar el correo: {0}'.format(err))
     finally:
         server.quit()
+    print()
     
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
