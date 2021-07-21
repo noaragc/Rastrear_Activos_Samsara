@@ -21,7 +21,7 @@ to_zone = tz.tzlocal()
 
 context = []
 
-async def main():
+async def main(n):
     global context
     api_key = get_api_key()
     base_url = get_base_url()
@@ -29,44 +29,43 @@ async def main():
     url_for_location_v = get_url_for_location_v()
     url_for_gmaps = get_gmaps_base_url()
 
-    async with ClientSession() as session:
-        vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
-    
-    vehicles_new = {}
-    vehicles_location = {}
-    async with ClientSession() as session:
-        for vehicle in vehicles:
-            if 'tags' in vehicle:
-                for x in vehicle['tags']:
-                    if x['name'].find('Valija') == -1:
-                        continue
-                    else:
-                        task = await get_location_for_vehicle(session, base_url + url_for_location_v + vehicle['id'], api_key) #obtener la ubicación de los tractos
-                        vehicles_location[vehicle['id']] = task['data'] #agregar las ubicaciones de los tractos que tienen asignada la valija a un nuevo diccionario
-                        vehicles_new[vehicle['id']] = vehicle #agregar vehículos que si tienen asignada la valija al nuevo diccionario
-    
-    for key, value in vehicles_location.items():
-        for v in value:
-            if 'locations' in v:
-                for x in v['locations']:
-                    if 'reverseGeo' in x:
-                        for kV, vV in vehicles_new.items():
-                            if vV['id'] == v['id']:
-                                for vv in vV['tags']:
-                                    url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])+'/@'+str(x['latitude'])+','+str(x['longitude'])+',14z/data=!4m2!4m1!3e0'
-                                    location_data = v['id'], v['name'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
-                                    #print('ID: {0} - Tractor: {1} - Ubicación: {2} - Tiempo y Hora UTC: {3} - Latitude: {4} - Longitud: {5} - Valija: {6}'.format(v['id'], v['name'], x['reverseGeo']['formattedLocation'],
-                                    #x['time'], x['latitude'], x['longitude'], vv['name']))
-                                    #print('Url Google Maps: {0}'.format(url_gmap))
-                                    context.append(location_data)
-                                    #print()
-                        
-                        #Enviar Whatsapp
-                        #py.sendwhatmsg(f'+526141627692','Tractor: {0} - Ubicación: {1} - Tiempo y Hora UTC: {2} - GoogleMaps: {3}'.format(v['name'], x['reverseGeo']['formattedLocation'],
-                        #x['time'], url_gmap), 13, 2)   
-
-    for x in context:
-        send_email(x)
+    while True:
+        await asyncio.sleep(n)
+        async with ClientSession() as session:
+            vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
+        
+        vehicles_new = {}
+        vehicles_location = {}
+        async with ClientSession() as session:
+            for vehicle in vehicles:
+                if 'tags' in vehicle:
+                    for x in vehicle['tags']:
+                        if x['name'].find('Valija') == -1:
+                            continue
+                        else:
+                            task = await get_location_for_vehicle(session, base_url + url_for_location_v + vehicle['id'], api_key) #obtener la ubicación de los tractos
+                            vehicles_location[vehicle['id']] = task['data'] #agregar las ubicaciones de los tractos que tienen asignada la valija a un nuevo diccionario
+                            vehicles_new[vehicle['id']] = vehicle #agregar vehículos que si tienen asignada la valija al nuevo diccionario
+        
+        for key, value in vehicles_location.items():
+            for v in value:
+                if 'locations' in v:
+                    for x in v['locations']:
+                        if 'reverseGeo' in x:
+                            for kV, vV in vehicles_new.items():
+                                if vV['id'] == v['id']:
+                                    for vv in vV['tags']:
+                                        url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])+'/@'+str(x['latitude'])+','+str(x['longitude'])+',14z/data=!4m2!4m1!3e0'
+                                        location_data = v['id'], v['name'], vV['notes'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
+                                        context.append(location_data)
+                                        #print()
+                            
+                            #Enviar Whatsapp
+                            #py.sendwhatmsg(f'+526141627692','Tractor: {0} - Ubicación: {1} - Tiempo y Hora UTC: {2} - GoogleMaps: {3}'.format(v['name'], x['reverseGeo']['formattedLocation'],
+                            #x['time'], url_gmap), 13, 2)   
+        #print(context)
+        for x in context:
+            send_email(x)
 #https://maps.google.com/maps/?q=&layer=c&cbll=18.85737859,-98.93522693
 #https://www.google.com.mx/maps/dir//18.86009089,-98.933726539/@18.86009089,-98.933726539,14z/data=!4m2!4m1!3e0
 
@@ -117,17 +116,17 @@ def convert_time_zone(utc_time):
 
 def send_email(context):
     config = get_config_email()
-    local_time = convert_time_zone(context[3])
+    local_time = convert_time_zone(context[4])
 
-    print(f'Id: {context[0]} - Tractor: {context[1]} -> {context[6]}\nLatitude: {context[4]} - Longitude: {context[5]}\nUbicación: {context[2]}\n{context[7]}')
+    print(f'Id: {context[0]} - Tractor: {context[1]} -> {context[7]}\nAnotaciones: {context[2]}\nUbicación: {context[3]}\nLatitude: {context[5]} - Longitude: {context[6]}\n{context[8]}')
     
     sender_email_address = config['email_config']['sender_email_address']
     sender_email_pwd = config['email_config']['sender_email_pwd']
     email_smtp = config['email_config']['email_smtp']
     email_port = config['email_config']['email_server_port']
 
-    email_subject = f'NOTIFICACIÓN | {context[6]} Tracto '+ context[1]
-    receiver_email_address = ['noelaguirre@trasoto.com']#,'iramos@trasoto.com']#,'noel_aaron@hotmail.com']
+    email_subject = f'NOTIFICACIÓN | {context[7]} Tracto '+ context[1]
+    receiver_email_address = ['noelaguirre@trasoto.com','valija@trasoto.com']
 
     try:
         message = EmailMessage()
@@ -137,11 +136,12 @@ def send_email(context):
 <head> 
 </head>    
     <body>        
-        <h1>Estado de la {context[6]}</h1>        
-        <p>Tractor: {context[1]}</p>
-        <p>Ubicación Actual: {context[2]}</p>
-        <p>Tiempo y Hora: {local_time}</p>  
-        <a href="{context[7]}">Ver en Google Maps</a>    
+        <h1>Estado de la {context[7]}</h1>        
+        <p>Tractor: <strong>{context[1]}</strong></p>
+        <p>Anotaciones:<br><strong>{context[2]}</strong></p>
+        <p>Ubicación Actual: <strong>{context[3]}</strong></p>
+        <p>Tiempo y Hora: <strong>{local_time}</strong></p>  
+        <a href="{context[8]}">Ver en Google Maps</a>    
     </body> 
 </html>
         '''
@@ -166,5 +166,12 @@ def send_email(context):
     print()
     
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main(1800))
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print('Cerrando Bucle')
+        loop.close()
