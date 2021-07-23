@@ -20,44 +20,44 @@ async def main():
     url_for_location_v = get_url_for_location_v()
     url_for_gmaps = get_gmaps_base_url()
 
-    while True:
-        context = []
-        #await asyncio.sleep(n)
-        async with ClientSession() as session:
-            vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
-        
-        vehicles_new = {}
-        vehicles_location = {}
-        async with ClientSession() as session:
-            for vehicle in vehicles:
-                if 'tags' in vehicle:
-                    for x in vehicle['tags']:
-                        if x['name'].find('Valija') == -1:
-                            continue
-                        else:
-                            task = await get_location_for_vehicle(session, base_url + url_for_location_v + vehicle['id'], api_key) #obtener la ubicación de los tractos
-                            vehicles_location[vehicle['id']] = task['data'] #agregar las ubicaciones de los tractos que tienen asignada la valija a un nuevo diccionario
-                            vehicles_new[vehicle['id']] = vehicle #agregar vehículos que si tienen asignada la valija al nuevo diccionario
-        
-        for key, value in vehicles_location.items():
-            for v in value:
-                if 'locations' in v:
-                    for x in v['locations']:
-                        if 'reverseGeo' in x:
-                            for kV, vV in vehicles_new.items():
-                                if vV['id'] == v['id']:
-                                    for vv in vV['tags']:
-                                        url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])+'/@'+str(x['latitude'])+','+str(x['longitude'])+',14z/data=!4m2!4m1!3e0'
-                                        location_data = v['id'], v['name'], vV['notes'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
-                                        context.append(location_data)
-                                        #print()
-                            
-                            #Enviar Whatsapp
-                            #py.sendwhatmsg(f'+526141627692','Tractor: {0} - Ubicación: {1} - Tiempo y Hora UTC: {2} - GoogleMaps: {3}'.format(v['name'], x['reverseGeo']['formattedLocation'],
-                            #x['time'], url_gmap), 13, 2)   
-        #print(context)
-        for x in context:
-            send_email(x)
+    #while True:
+    context = []
+    #await asyncio.sleep(n)
+    async with ClientSession() as session:
+        vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
+    
+    vehicles_new = {}
+    vehicles_location = {}
+    async with ClientSession() as session:
+        for vehicle in vehicles:
+            if 'tags' in vehicle:
+                for x in vehicle['tags']:
+                    if x['name'].find('Valija') == -1:
+                        continue
+                    else:
+                        task = await get_location_for_vehicle(session, base_url + url_for_location_v + vehicle['id'], api_key) #obtener la ubicación de los tractos
+                        vehicles_location[vehicle['id']] = task['data'] #agregar las ubicaciones de los tractos que tienen asignada la valija a un nuevo diccionario
+                        vehicles_new[vehicle['id']] = vehicle #agregar vehículos que si tienen asignada la valija al nuevo diccionario
+    
+    for key, value in vehicles_location.items():
+        for v in value:
+            if 'locations' in v:
+                for x in v['locations']:
+                    if 'reverseGeo' in x:
+                        for kV, vV in vehicles_new.items():
+                            if vV['id'] == v['id']:
+                                for vv in vV['tags']:
+                                    url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])+'/@'+str(x['latitude'])+','+str(x['longitude'])+',14z/data=!4m2!4m1!3e0'
+                                    location_data = v['id'], v['name'], vV['notes'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
+                                    context.append(location_data)
+                                    #print()
+                        
+                        #Enviar Whatsapp
+                        #py.sendwhatmsg(f'+526141627692','Tractor: {0} - Ubicación: {1} - Tiempo y Hora UTC: {2} - GoogleMaps: {3}'.format(v['name'], x['reverseGeo']['formattedLocation'],
+                        #x['time'], url_gmap), 13, 2)   
+    #print(context)
+    for x in context:
+        send_email(x)
 #https://maps.google.com/maps/?q=&layer=c&cbll=18.85737859,-98.93522693
 #https://www.google.com.mx/maps/dir//18.86009089,-98.933726539/@18.86009089,-98.933726539,14z/data=!4m2!4m1!3e0
 
@@ -161,9 +161,9 @@ if __name__ == '__main__':
     try:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(main())
-        loop.run_forever()
+        #loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
-        print('Cerrando Bucle')
+        print('Loop ended')
         loop.close()
