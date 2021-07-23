@@ -13,7 +13,7 @@ from aiohttp import ClientSession
 from_zone = tz.tzutc()
 to_zone = tz.tzlocal()
 
-async def main(n):
+async def main():
     api_key = get_api_key()
     base_url = get_base_url()
     url_for_vehicles = get_url_for_vehicles()
@@ -22,7 +22,7 @@ async def main(n):
 
     while True:
         context = []
-        await asyncio.sleep(n)
+        #await asyncio.sleep(n)
         async with ClientSession() as session:
             vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
         
@@ -160,7 +160,7 @@ def send_email(context):
 if __name__ == '__main__':
     try:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(main(3600))
+        loop.run_until_complete(main())
         loop.run_forever()
     except KeyboardInterrupt:
         pass
