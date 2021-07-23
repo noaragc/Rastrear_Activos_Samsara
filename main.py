@@ -1,11 +1,5 @@
-from asyncio.windows_events import NULL
 import configparser
-from typing import final
-import aiohttp
 import asyncio
-import json
-#Librería de Whatsapp
-# import pywhatkit as py
 #Librería para Envío de Correos Electrónicos
 import smtplib
 #
