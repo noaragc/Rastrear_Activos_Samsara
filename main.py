@@ -19,10 +19,7 @@ from aiohttp import ClientSession
 from_zone = tz.tzutc()
 to_zone = tz.tzlocal()
 
-context = []
-
 async def main(n):
-    global context
     api_key = get_api_key()
     base_url = get_base_url()
     url_for_vehicles = get_url_for_vehicles()
@@ -30,6 +27,7 @@ async def main(n):
     url_for_gmaps = get_gmaps_base_url()
 
     while True:
+        context = []
         await asyncio.sleep(n)
         async with ClientSession() as session:
             vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
@@ -141,7 +139,7 @@ def send_email(context):
         <p>Anotaciones:<br><strong>{context[2]}</strong></p>
         <p>Ubicación Actual: <strong>{context[3]}</strong></p>
         <p>Tiempo y Hora: <strong>{local_time}</strong></p>  
-        <a href="{context[8]}">Ver en Google Maps</a>    
+        <a href="{context[8]}">Ver en Google Maps</a>
     </body> 
 </html>
         '''
@@ -168,7 +166,7 @@ def send_email(context):
 if __name__ == '__main__':
     try:
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(main(1800))
+        loop.run_until_complete(main(3600))
         loop.run_forever()
     except KeyboardInterrupt:
         pass
