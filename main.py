@@ -42,19 +42,13 @@ async def main():
                         for kV, vV in vehicles_new.items():
                             if vV['id'] == v['id']:
                                 for vv in vV['tags']:
-                                    url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])+'/@'+str(x['latitude'])+','+str(x['longitude'])+',14z/data=!4m2!4m1!3e0'
+                                    url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])
                                     location_data = v['id'], v['name'], vV['notes'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
                                     context.append(location_data)
-                                    #print()
-                        
-                        #Enviar Whatsapp
-                        #py.sendwhatmsg(f'+526141627692','Tractor: {0} - Ubicación: {1} - Tiempo y Hora UTC: {2} - GoogleMaps: {3}'.format(v['name'], x['reverseGeo']['formattedLocation'],
-                        #x['time'], url_gmap), 13, 2)   
+
     #print(context)
     for x in context:
         send_email(x)
-#https://maps.google.com/maps/?q=&layer=c&cbll=18.85737859,-98.93522693
-#https://www.google.com.mx/maps/dir//18.86009089,-98.933726539/@18.86009089,-98.933726539,14z/data=!4m2!4m1!3e0
 
 async def get_vehicles(session, url, api_key):
     async with session.get(url, headers={'Authorization': 'Bearer {0}'.format(api_key), 'Content-Type':'application/json; charset=utf-8'}) as response:
