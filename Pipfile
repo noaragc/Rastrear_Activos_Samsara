@@ -8,6 +8,7 @@ aiohttp = "*"
 pywhatkit = "*"
 tz = "*"
 python-dateutil = "*"
+pytz = "*"
 
 [dev-packages]
 
