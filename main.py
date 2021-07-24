@@ -2,16 +2,13 @@ import configparser
 import asyncio
 #Librería para Envío de Correos Electrónicos
 import smtplib
-#
+import pytz
+
 from datetime import datetime
-from dateutil import tz
-
 from email.message import EmailMessage
-
 from aiohttp import ClientSession
 
-from_zone = tz.tzutc()
-to_zone = tz.tzlocal()
+tz = pytz.timezone('America/Chihuahua')
 
 async def main():
     api_key = get_api_key()
@@ -20,9 +17,7 @@ async def main():
     url_for_location_v = get_url_for_location_v()
     url_for_gmaps = get_gmaps_base_url()
 
-    #while True:
     context = []
-    #await asyncio.sleep(n)
     async with ClientSession() as session:
         vehicles = await get_vehicles(session, base_url+url_for_vehicles, api_key)
     
@@ -102,13 +97,14 @@ def get_config_email():
 
 def convert_time_zone(utc_time):
     utcTime = datetime.strptime(utc_time, '%Y-%m-%dT%H:%M:%S%z')
-    utcTime = utcTime.replace(tzinfo=from_zone)
-    local_time = utcTime.astimezone(to_zone)
-    return local_time.strftime('%d-%m-%Y %H:%M:%S')
+    new_ct = utcTime.astimezone(tz)
+    local_time = new_ct.strftime('%d-%m-%Y %H:%M:%S')
+    return local_time
 
 def send_email(context):
     config = get_config_email()
     local_time = convert_time_zone(context[4])
+    print(local_time)
 
     print(f'Id: {context[0]} - Tractor: {context[1]} -> {context[7]}\nAnotaciones: {context[2]}\nUbicación: {context[3]}\nLatitude: {context[5]} - Longitude: {context[6]}\n{context[8]}')
     
