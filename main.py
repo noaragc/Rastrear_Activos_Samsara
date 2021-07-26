@@ -121,7 +121,11 @@ def send_email(context):
     email_port = os.environ['email_server_port']
 
     email_subject = f'NOTIFICACIÓN | {context[7]} Tracto '+ context[1]
-    receiver_email_address = ['noelaguirre@trasoto.com']#,'valija@trasoto.com']
+    
+    #Get the emails that will receive the emails
+    list_of_emails = os.environ['receiver_email_address']
+    #Emails must be separated by comma
+    list_separated = list_of_emails.split(',')
 
     try:
         message = EmailMessage()
@@ -143,7 +147,7 @@ def send_email(context):
 
         message['Subject'] = email_subject
         message['From'] = sender_email_address
-        message['To'] = receiver_email_address
+        message['To'] = list_separated
 
         message.set_content(message_html, subtype='html')
 
