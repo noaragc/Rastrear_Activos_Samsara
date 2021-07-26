@@ -1,4 +1,5 @@
-import configparser
+import os
+#import configparser
 import asyncio
 #Librería para Envío de Correos Electrónicos
 import smtplib
@@ -11,11 +12,16 @@ from aiohttp import ClientSession
 tz = pytz.timezone('America/Chihuahua')
 
 async def main():
-    api_key = get_api_key()
-    base_url = get_base_url()
-    url_for_vehicles = get_url_for_vehicles()
-    url_for_location_v = get_url_for_location_v()
-    url_for_gmaps = get_gmaps_base_url()
+    #api_key = get_api_key()
+    api_key = os.environ['SM_API_KEY']
+    #base_url = get_base_url()
+    base_url = os.environ['SM_BASE_URL']
+    #url_for_vehicles = get_url_for_vehicles()
+    url_for_vehicles = os.environ['SM_URL_FOR_VEHICLES']
+    #url_for_location_v = get_url_for_location_v()
+    url_for_location_v = os.environ['SM_URL_FOR_LOCATIONS']
+    #url_for_gmaps = get_gmaps_base_url()
+    url_for_gmaps = os.environ['GM_BASE_URL']
 
     context = []
     async with ClientSession() as session:
@@ -63,34 +69,34 @@ async def get_location_for_vehicle(session, url, api_key):
         res = await response.json()
         return res
 
-def get_url_for_vehicles():
-    config = get_config_file()
-    return config['samsara_url_vehicles']['url_for_vehicles']
+#def get_url_for_vehicles():
+#    config = get_config_file()
+#    return config['samsara_url_vehicles']['url_for_vehicles']
 
-def get_url_for_location_v():
-    config = get_config_file()
-    return config['samsara_url_location_v']['url_for_loc_v']
+#def get_url_for_location_v():
+#    config = get_config_file()
+#    return config['samsara_url_location_v']['url_for_loc_v']
 
-def get_base_url():
-    config = get_config_file()
-    return config['samsara_base_url']['base_url']
+#def get_base_url():
+#    config = get_config_file()
+#    return config['samsara_base_url']['base_url']
 
-def get_gmaps_base_url():
-    config = get_config_file()
-    return config['google_url_maps']['base_url']
+#def get_gmaps_base_url():
+#    config = get_config_file()
+#    return config['google_url_maps']['base_url']
 
-def get_api_key():
-    config = get_config_file()
-    return config['samsara_api_key']['api_key']
+#def get_api_key():
+#    config = get_config_file()
+#    return config['samsara_api_key']['api_key']
 
-def get_config_file():
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    return config
+#def get_config_file():
+#    config = configparser.ConfigParser()
+#    config.read('config.ini')
+#    return config
 
-def get_config_email():
-    config = get_config_file()
-    return config
+#def get_config_email():
+#    config = get_config_file()
+#    return config
 
 def convert_time_zone(utc_time):
     utcTime = datetime.strptime(utc_time, '%Y-%m-%dT%H:%M:%S%z')
@@ -99,16 +105,20 @@ def convert_time_zone(utc_time):
     return local_time
 
 def send_email(context):
-    config = get_config_email()
+    #config = get_config_email()
     local_time = convert_time_zone(context[4])
+    
     print(local_time)
-
     print(f'Id: {context[0]} - Tractor: {context[1]} -> {context[7]}\nAnotaciones: {context[2]}\nUbicación: {context[3]}\nLatitude: {context[5]} - Longitude: {context[6]}\n{context[8]}')
     
-    sender_email_address = config['email_config']['sender_email_address']
-    sender_email_pwd = config['email_config']['sender_email_pwd']
-    email_smtp = config['email_config']['email_smtp']
-    email_port = config['email_config']['email_server_port']
+    #sender_email_address = config['email_config']['sender_email_address']
+    sender_email_address = os.environ['sender_email_address']
+    #sender_email_pwd = config['email_config']['sender_email_pwd']
+    sender_email_pwd = os.environ['sender_email_pwd']
+    #email_smtp = config['email_config']['email_smtp']
+    email_smtp = os.environ['email_smtp']
+    #email_port = config['email_config']['email_server_port']
+    email_port = os.environ['email_server_port']
 
     email_subject = f'NOTIFICACIÓN | {context[7]} Tracto '+ context[1]
     receiver_email_address = ['noelaguirre@trasoto.com']#,'valija@trasoto.com']
