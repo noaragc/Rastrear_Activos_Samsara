@@ -57,7 +57,10 @@ async def main():
         print('Sin viaje de Valijas')
     else:
         for x in context:
-            send_email(x)
+            if x[7].find('Valija') == -1:
+                continue
+            else:
+                send_email(x)
 
 async def get_vehicles(session, url, api_key):
     async with session.get(url, headers={'Authorization': 'Bearer {0}'.format(api_key), 'Content-Type':'application/json; charset=utf-8'}) as response:
