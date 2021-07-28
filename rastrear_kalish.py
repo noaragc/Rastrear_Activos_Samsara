@@ -76,7 +76,6 @@ async def main():
                                                 context.append(location_data)
                                 elif not assets_new:
                                     for vv in vV['tags']:
-                                        print('Hola')
                                         url_gmap = url_for_gmaps + str(x['latitude'])+','+str(x['longitude'])
                                         location_data = v['id'], v['name'], vV['notes'], x['reverseGeo']['formattedLocation'],x['time'], x['latitude'], x['longitude'], vv['name'], url_gmap
                                         context.append(location_data)
