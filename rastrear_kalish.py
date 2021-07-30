@@ -1,5 +1,5 @@
 import os
-#import configparser
+import configparser
 import asyncio
 #Librería para Envío de Correos Electrónicos
 import smtplib
@@ -12,18 +12,23 @@ from aiohttp import ClientSession
 tz = pytz.timezone('America/Chihuahua')
 
 async def main():
-    #api_key = get_api_key()
-    api_key = os.environ['SM_API_KEY']
-    #base_url = get_base_url()
-    base_url = os.environ['SM_BASE_URL']
-    #url_for_vehicles = get_url_for_vehicles()
-    url_for_vehicles = os.environ['SM_URL_FOR_VEHICLES']
-    #url_for_location_v = get_url_for_location_v()
-    url_for_location_v = os.environ['SM_URL_FOR_LOCATIONS']
-    #url_for_gmaps = get_gmaps_base_url()
-    url_for_gmaps = os.environ['GM_BASE_URL']
-    #url_for_assets = get_url_for_assets()
-    url_for_assets = os.environ['SM_URL_FOR_ASSETS']
+    ''' START local vars'''
+    api_key = get_api_key()
+    base_url = get_base_url()
+    url_for_vehicles = get_url_for_vehicles()
+    url_for_location_v = get_url_for_location_v()
+    url_for_gmaps = get_gmaps_base_url()
+    url_for_assets = get_url_for_assets()
+    ''' END local vars'''
+    
+    ''' START server vars'''
+    # api_key = os.environ['SM_API_KEY']
+    # base_url = os.environ['SM_BASE_URL']
+    # url_for_vehicles = os.environ['SM_URL_FOR_VEHICLES']
+    # url_for_location_v = os.environ['SM_URL_FOR_LOCATIONS']
+    # url_for_gmaps = os.environ['GM_BASE_URL']
+    # url_for_assets = os.environ['SM_URL_FOR_ASSETS']
+    ''' END server vars'''
 
     context = []
     async with ClientSession() as session:
@@ -88,6 +93,7 @@ async def main():
             if x[7].find('Kalish') == -1:
                 continue
             else:
+                #print(x)
                 send_email(x)
 
 async def get_vehicles(session, url, api_key):
@@ -104,39 +110,40 @@ async def get_location_for_vehicle(session, url, api_key):
     async with session.get(url, headers={'Authorization': 'Bearer {0}'.format(api_key), 'Content-Type':'application/json; charset=utf-8'}) as response:
         res = await response.json()
         return res
+''' START local vars '''
+def get_url_for_assets():
+    config = get_config_file()
+    return config['samsara_url_vehicles']['url_for_assets']
 
-# def get_url_for_assets():
-#     config = get_config_file()
-#     return config['samsara_url_vehicles']['url_for_assets']
+def get_url_for_vehicles():
+   config = get_config_file()
+   return config['samsara_url_vehicles']['url_for_vehicles']
 
-# def get_url_for_vehicles():
-#    config = get_config_file()
-#    return config['samsara_url_vehicles']['url_for_vehicles']
+def get_url_for_location_v():
+   config = get_config_file()
+   return config['samsara_url_location_v']['url_for_loc_v']
 
-# def get_url_for_location_v():
-#    config = get_config_file()
-#    return config['samsara_url_location_v']['url_for_loc_v']
+def get_base_url():
+   config = get_config_file()
+   return config['samsara_base_url']['base_url']
 
-# def get_base_url():
-#    config = get_config_file()
-#    return config['samsara_base_url']['base_url']
+def get_gmaps_base_url():
+   config = get_config_file()
+   return config['google_url_maps']['base_url']
 
-# def get_gmaps_base_url():
-#    config = get_config_file()
-#    return config['google_url_maps']['base_url']
+def get_api_key():
+   config = get_config_file()
+   return config['samsara_api_key']['api_key']
 
-# def get_api_key():
-#    config = get_config_file()
-#    return config['samsara_api_key']['api_key']
+def get_config_file():
+   config = configparser.ConfigParser()
+   config.read('config.ini')
+   return config
 
-# def get_config_file():
-#    config = configparser.ConfigParser()
-#    config.read('config.ini')
-#    return config
-
-# def get_config_email():
-#    config = get_config_file()
-#    return config
+def get_config_email():
+   config = get_config_file()
+   return config
+''' END local vars '''
 
 def convert_time_zone(utc_time):
     utcTime = datetime.strptime(utc_time, '%Y-%m-%dT%H:%M:%S%z')
